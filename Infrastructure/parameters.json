@@ -1,0 +1,17 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "storageAccounts_storageshahzaib_name": {
+      "value": null
+    },
+    "databaseAccounts_databaseshahzaib_name": {  
+    },
+    "sites_functionShahzaib_name": {
+      "value": null
+    },
+    "serverfarms_ASP_Resourceshahzaib_externalid": { 
+      "value": null
+    }
+  }
+}
