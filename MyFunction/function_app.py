@@ -3,7 +3,7 @@ import logging
 from azure.cosmos import CosmosClient, exceptions
 
 # Initialize the Cosmos DB client
-cosmos_endpoint = 'https://shahzaib-bd.documents.azure.com:443/'  # Your Cosmos DB endpoint
+cosmos_endpoint = 'https://databaseshahzaib.documents.azure.com:443/'  # Your Cosmos DB endpoint
 cosmos_key = '2SlblNu6gAgvKzUD9TyUhUXFhMbhE8ijPb4UItSrvkH9qqmyDe8Iv0NIOuuc3e5CMmpCTW6G70neACDb2ZcX2w=='  # Your Cosmos DB key
 database_name = 'shahzaibdb'  # Your database name
 container_name = 'conshahzaib'  # Your container name
