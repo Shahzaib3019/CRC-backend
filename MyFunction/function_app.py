@@ -44,12 +44,17 @@ def http_triggershahzaib(req: func.HttpRequest) -> func.HttpResponse:  # Updated
             'count': visitor_count
         })
 
-        # Return only the visitor count as plain text
+        # Return the visitor count as plain text
         return func.HttpResponse(
             str(visitor_count),  # Return the visitor count as plain text
-            status_code=200
+            status_code=200,
+            mimetype="text/plain"  # Set the MIME type to plain text
         )
 
     except exceptions.CosmosHttpResponseError as e:
         logging.error(f"Error storing item in Cosmos DB: {str(e)}")
         return func.HttpResponse(f"Failed to update the visitor count in Cosmos DB. Error: {str(e)}", status_code=500)
+
+    except Exception as e:
+        logging.error(f"An unexpected error occurred: {str(e)}")
+        return func.HttpResponse("An unexpected error occurred.", status_code=500)
