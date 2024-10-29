@@ -5,7 +5,7 @@ import pytest
 from unittest.mock import MagicMock, patch
 
 # Import the Azure function you're testing
-from function_app import http_triggersammreen  # Updated function name
+from function_app import http_triggershahzaib  # Updated function name
 
 @pytest.fixture
 def mock_container():
@@ -27,7 +27,6 @@ def mock_environment_variables():
     with patch.dict(os.environ, {
         "COSMOS_DB_ENDPOINT": "https://your-cosmos-db-endpoint",
         "COSMOS_DB_KEY": "your-cosmos-db-key"
-
     }):
         yield
 
@@ -38,7 +37,7 @@ def test_http_trigger_without_name(req_without_name, mock_container, mock_enviro
     mock_container.upsert_item.return_value = None
 
     # Call the function
-    response = http_triggersammreen(req_without_name)  # Updated function call
+    response = http_triggershahzaib(req_without_name)  # Updated function call
 
     # Add your assertions here
     assert response.status_code == 200  # Update with expected status code
@@ -51,7 +50,7 @@ def test_http_trigger_create_new_visitor_item(req_without_name, mock_container, 
 
     # Call the function and handle the exception if you want
     try:
-        response = http_triggersammreen(req_without_name)  # Updated function call
+        response = http_triggershahzaib(req_without_name)  # Updated function call
         assert response.status_code == 200  # Update with expected status code
     except Exception as e:
         assert str(e) == 'Item not found'  # Expect the exception message

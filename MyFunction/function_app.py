@@ -1,12 +1,17 @@
 import azure.functions as func
 import logging
 from azure.cosmos import CosmosClient, exceptions
+from dotenv import load_dotenv
+import os
+
+# Load environment variables from .env file
+load_dotenv()
 
 # Initialize the Cosmos DB client
-cosmos_endpoint = 'https://databaseshahzaib.documents.azure.com:443/'  # Your Cosmos DB endpoint
-cosmos_key = '2SlblNu6gAgvKzUD9TyUhUXFhMbhE8ijPb4UItSrvkH9qqmyDe8Iv0NIOuuc3e5CMmpCTW6G70neACDb2ZcX2w=='  # Your Cosmos DB key
-database_name = 'shahzaibdb'  # Your database name
-container_name = 'conshahzaib'  # Your container name
+cosmos_endpoint = os.getenv('COSMOS_ENDPOINT')  
+cosmos_key = os.getenv('COSMOS_KEY')  
+database_name = os.getenv('DATABASE_NAME')  
+container_name = os.getenv('CONTAINER_NAME') 
 
 # Create a Cosmos DB client
 client = CosmosClient(cosmos_endpoint, cosmos_key)
@@ -17,8 +22,8 @@ container = database.get_container_client(container_name)
 
 app = func.FunctionApp(http_auth_level=func.AuthLevel.FUNCTION)
 
-@app.route(route="http_triggershahzaib")
-def http_triggershahzaib(req: func.HttpRequest) -> func.HttpResponse:
+@app.route(route="http_triggershahzaib")  # Updated route name
+def http_triggershahzaib(req: func.HttpRequest) -> func.HttpResponse:  # Updated function name
     logging.info('Python HTTP trigger function processed a request.')
 
     try:
