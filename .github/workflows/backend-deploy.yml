@@ -16,7 +16,7 @@ jobs:
     - name: Set up Python
       uses: actions/setup-python@v2
       with:
-        python-version: '3.12'  # Specify the exact Python version
+        python-version: '3.x'
 
     - name: Install dependencies
       run: |
@@ -25,20 +25,15 @@ jobs:
 
     - name: Set environment variables
       run: |
-        echo "COSMOS_ENDPOINT=${{ secrets.COSMOS_ENDPOINT }}" >> $GITHUB_ENV
+        echo "COSMOS_ENDPOINT=${{ secrets.COSMOS_ENDPOINT  }}" >> $GITHUB_ENV
         echo "COSMOS_KEY=${{ secrets.COSMOS_KEY }}" >> $GITHUB_ENV
-        echo "DATABASE_NAME=${{ secrets.DATABASE_NAME }}" >> $GITHUB_ENV
-        echo "CONTAINER_NAME=${{ secrets.CONTAINER_NAME }}" >> $GITHUB_ENV
-
-    # Optional step to debug: Uncomment to print environment variables (remove this step in production)
-    # - name: Show environment variables
-    #   run: |
-    #     echo "COSMOS_ENDPOINT: $COSMOS_ENDPOINT"
-    #     echo "COSMOS_KEY: $COSMOS_KEY"
 
     - name: Run tests
+      env:
+        COSMOS_ENDPOINT: ${{ secrets.COSMOS_ENDPOINT }}
+        COSMOS_KEY: ${{ secrets.COSMOS_KEY }}
       run: |
-        cd MyFunction
+        cd MyFunction/test
         pytest
 
     - name: Azure Login
@@ -48,4 +43,4 @@ jobs:
 
     - name: Deploy ARM Template
       run: |
-        az deployment group create --resource-group resourceshahzaib --template-file template.json --parameters parameters.json
+        az deployment group create --resource-group Resourceshahzaib --template-file Infrastructure/template.json --parameters Infrastructure/parameters.json
