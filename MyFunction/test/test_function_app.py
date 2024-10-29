@@ -1,60 +1,35 @@
-import json
-import os
-import azure.functions as func
 import pytest
-from unittest.mock import MagicMock, patch
+from azure.cosmos import exceptions
+from function_app import http_triggershahzaib  # Import your function
 
-# Import the Azure function you're testing
-from function_app import http_triggershahzaib  # Updated function name
+def test_http_triggershahzaib(mocker):
+    mocker.patch('azure.cosmos.CosmosClient')  # Mock CosmosClient
 
-@pytest.fixture
-def mock_container():
-    """Create a mock container for Cosmos DB."""
-    return MagicMock()
+    # Setup your mock client, database, and container
+    mock_client = mocker.Mock()
+    mock_database = mock_client.get_database_client.return_value
+    mock_container = mock_database.get_container_client.return_value
 
-@pytest.fixture
-def req_without_name():
-    """Create a mock HTTP request without a name in the body."""
-    req_body = json.dumps({"name": "test_user"}).encode('utf-8')
-    req = MagicMock(spec=func.HttpRequest)
-    req.get_json.return_value = json.loads(req_body)
-    req.__body_bytes = req_body  # Ensure this is bytes
-    return req
-
-@pytest.fixture
-def mock_environment_variables():
-    """Mock the environment variables for testing."""
-    with patch.dict(os.environ, {
-        "COSMOS_DB_ENDPOINT": "https://your-cosmos-db-endpoint",
-        "COSMOS_DB_KEY": "your-cosmos-db-key"
-    }):
-        yield
-
-def test_http_trigger_without_name(req_without_name, mock_container, mock_environment_variables):
-    """Test case where the request does not provide a name."""
-    # Mock CosmosDB response
-    mock_container.read_item.return_value = {'count': 0}
+    # Mock read_item and upsert_item methods
+    mock_container.read_item.return_value = {'count': 5}
     mock_container.upsert_item.return_value = None
 
-    # Call the function
-    response = http_triggershahzaib(req_without_name)  # Updated function call
+    # Create a mock HttpRequest
+    class MockHttpRequest:
+        def __init__(self):
+            self.method = 'GET'
 
-    # Add your assertions here
-    assert response.status_code == 200  # Update with expected status code
+    req = MockHttpRequest()
 
-def test_http_trigger_create_new_visitor_item(req_without_name, mock_container, mock_environment_variables):
-    """Test case for creating a new visitor item."""
-    # Mock CosmosDB exception and create new item
-    mock_container.read_item.side_effect = Exception('Item not found')
-    mock_container.create_item.return_value = {'count': 1}
+    # Call your function
+    response = http_triggershahzaib(req)
 
-    # Call the function and handle the exception if you want
-    try:
-        response = http_triggershahzaib(req_without_name)  # Updated function call
-        assert response.status_code == 200  # Update with expected status code
-    except Exception as e:
-        assert str(e) == 'Item not found'  # Expect the exception message
+    # Check response
+    assert response.status_code == 200
+    assert response.get_body().decode() == '6'  # Expecting incremented value
 
-def test_some_other_case(req_without_name, mock_container, mock_environment_variables):
-    """A placeholder for another test case."""
-    pass
+    # Assert that upsert_item was called
+    mock_container.upsert_item.assert_called_once_with({
+        'id': 'visitor_count',
+        'count': 6
+    })
