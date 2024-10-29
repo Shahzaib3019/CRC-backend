@@ -23,8 +23,8 @@ def mock_request():
 @patch('function_app.container')
 def test_http_triggershahzaib_with_name(mock_container, mock_request, monkeypatch):
     # Load environment variables for testing
-    monkeypatch.setenv("COSMOSDB_ENDPOINT", os.getenv("COSMOS_ENDPOINT"))
-    monkeypatch.setenv("COSMOSDB_KEY", os.getenv("COSMOS_KEY"))
+    monkeypatch.setenv("COSMOS_ENDPOINT", os.getenv("COSMOS_ENDPOINT"))
+    monkeypatch.setenv("COSMOS_KEY", os.getenv("COSMOS_KEY"))
 
     # Set up the mock return value for the container's read_item method
     mock_container.read_item.return_value = {'visitor_count': 1}
