@@ -1,60 +1,62 @@
+import os
 import azure.functions as func
 import logging
+import json
 from azure.cosmos import CosmosClient, exceptions
-from dotenv import load_dotenv
-import os
 
-# Load environment variables from .env file
-load_dotenv()
+# Fetch CosmosDB client details from environment variables
+endpoint = os.environ.get("COSMOS_ENDPOINT")
+key = os.environ.get("COSMOS_KEY")
 
-# Initialize the Cosmos DB client
-cosmos_endpoint = os.getenv('COSMOS_ENDPOINT')  
-cosmos_key = os.getenv('COSMOS_KEY')  
-database_name = os.getenv('DATABASE_NAME')  
-container_name = os.getenv('CONTAINER_NAME') 
+# Debugging: Print environment variables
+print("COSMOS_ENDPOINT:", endpoint)
+print("COSMOS_KEY:", key)
 
-# Create a Cosmos DB client
-client = CosmosClient(cosmos_endpoint, cosmos_key)
+database_name = "shahzaibdb"
+container_name = "conshahzaib"
 
-# Get the database and container clients
+client = CosmosClient(endpoint, credential=key)  # Use credential parameter for key
 database = client.get_database_client(database_name)
 container = database.get_container_client(container_name)
 
 app = func.FunctionApp(http_auth_level=func.AuthLevel.FUNCTION)
 
-@app.route(route="http_triggershahzaib")  # Updated route name
-def http_triggershahzaib(req: func.HttpRequest) -> func.HttpResponse:  # Updated function name
+@app.route(route="http_triggershahzaib")
+def http_triggershahzaib(req: func.HttpRequest) -> func.HttpResponse:
     logging.info('Python HTTP trigger function processed a request.')
-
+    visitor_count = 0
     try:
-        # Check if the visitor count item exists
+        visitor_item = container.read_item(item="visitor_count", partition_key="visitor_count")
+        visitor_count = visitor_item.get('count', 0)
+        visitor_item['count'] = visitor_count + 1
+        container.upsert_item(visitor_item)
+        visitor_count = visitor_item['count']
+    except exceptions.CosmosHttpResponseError:
+        visitor_item = {
+            'id': 'visitor_count',
+            'count': 1
+        }
+        container.create_item(visitor_item)
+        visitor_count = 1
+
+    name = req.params.get('name')
+    if not name:
         try:
-            visitor_count_item = container.read_item(item='visitor_count', partition_key='visitor_count')
-            visitor_count = visitor_count_item['count']
-        except exceptions.CosmosResourceNotFoundError:
-            # If the item does not exist, start the count at 0
-            visitor_count = 0
+            req_body = req.get_json()
+        except ValueError:
+            req_body = None
+        if req_body:
+            name = req_body.get('name')
 
-        # Increment the visitor count
-        visitor_count += 1
-
-        # Upsert the new count into Cosmos DB
-        container.upsert_item({
-            'id': 'visitor_count',  # Unique ID for the document
-            'count': visitor_count
-        })
-
-        # Return the visitor count as plain text
+    if name:
         return func.HttpResponse(
-            str(visitor_count),  # Return the visitor count as plain text
+            json.dumps({"message": f"Hello, {name}. Your name has been added to the database.", "visitor_count": visitor_count}),
             status_code=200,
-            mimetype="text/plain"  # Set the MIME type to plain text
+            mimetype="application/json"
         )
-
-    except exceptions.CosmosHttpResponseError as e:
-        logging.error(f"Error storing item in Cosmos DB: {str(e)}")
-        return func.HttpResponse(f"Failed to update the visitor count in Cosmos DB. Error: {str(e)}", status_code=500)
-
-    except Exception as e:
-        logging.error(f"An unexpected error occurred: {str(e)}")
-        return func.HttpResponse("An unexpected error occurred.", status_code=500)
+    else:
+        return func.HttpResponse(
+            json.dumps({"message": "This HTTP triggered function executed successfully.", "visitor_count": visitor_count}),
+            status_code=200,
+            mimetype="application/json"
+        )
