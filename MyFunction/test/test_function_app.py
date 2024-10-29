@@ -1,31 +1,53 @@
 import pytest
-from function_app import http_triggershahzaib  # Import your Azure Function
+from unittest.mock import patch, MagicMock
+import azure.functions as func
+import json
+import sys
+import os
+from dotenv import load_dotenv
 
-def test_http_triggershahzaib(mocker):
-    # Mock CosmosClient
-    mocker.patch('azure.cosmos.CosmosClient')  # Mock CosmosClient
+# Load environment variables from .env file for testing
+load_dotenv()
 
-    # Setup your mock client, database, and container
-    mock_client = mocker.Mock()
-    mock_database = mock_client.get_database_client.return_value
-    mock_container = mock_database.get_container_client.return_value
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
-    # Mock read_item to return a count of 5
-    mock_container.read_item.return_value = {'id': 'visitor_count', 'count': 5}
-    mock_container.upsert_item.return_value = None
+from function_app import http_triggershahzaib
 
-    # Create a mock HttpRequest
-    class MockHttpRequest:
-        def __init__(self):
-            self.method = 'GET'
+@pytest.fixture
+def mock_request():
+    req = MagicMock(spec=func.HttpRequest)
+    req.params = {}
+    req.get_json.return_value = {}
+    return req
 
-    req = MockHttpRequest()
+@patch('function_app.container')
+def test_http_triggershahzaib_with_name(mock_container, mock_request, monkeypatch):
+    # Load environment variables for testing
+    monkeypatch.setenv("COSMOSDB_ENDPOINT", os.getenv("COSMOS_ENDPOINT"))
+    monkeypatch.setenv("COSMOSDB_KEY", os.getenv("COSMOS_KEY"))
 
-    # Call your function
-    response = http_triggershahzaib(req)
+    # Set up the mock return value for the container's read_item method
+    mock_container.read_item.return_value = {'visitor_count': 1}
 
-    # Check response
+    # Simulate a request with a name
+    mock_request.get_json.return_value = {'name': 'shahzaib'}
+
+    response = http_triggershahzaib(mock_request)
+
     assert response.status_code == 200
-    assert response.get_body().decode() == '6'  # Expecting incremented value
+    data = json.loads(response.get_body())
+    assert data['message'] == "Hello, shahzaib. Your name has been added to the database."
+    assert data['visitor_count'] == 1
 
-# Additional tests can be added here as needed
+
+@patch('function_app.container')
+def test_http_triggershahzaib_without_name(mock_container, mock_request):
+    # Set up the mock return value for the container's read_item method
+    mock_container.read_item.return_value = {'visitor_count': 1}
+
+    response = http_triggershahzaib(mock_request)
+    
+    assert response.status_code == 200
+    data = json.loads(response.get_body())
+    assert data['message'] == "This HTTP triggered function executed successfully."
+    assert data['visitor_count'] == 1
